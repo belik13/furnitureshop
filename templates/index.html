@@ -712,18 +712,19 @@
         </div>
       </div>
       <div class="reveal">
+        <!-- ВАЖНО: проверьте, что у всех полей правильные id -->
         <form id="projectForm">
           <div class="field">
-            <label for="name">Имя</label>
-            <input type="text" id="name" placeholder="Как к вам обращаться" required>
+            <label for="user_name">Имя</label>
+            <input type="text" id="user_name" placeholder="Как к вам обращаться" required>
           </div>
           <div class="field">
-            <label for="contact">Email или Telegram</label>
-            <input type="text" id="contact" placeholder="you@company.com или @username" required>
+            <label for="user_contact">Email или Telegram</label>
+            <input type="text" id="user_contact" placeholder="you@company.com или @username" required>
           </div>
           <div class="field">
-            <label for="objtype">Тип объекта</label>
-            <select id="objtype">
+            <label for="object_type">Тип объекта</label>
+            <select id="object_type">
               <option>Квартира / апартаменты</option>
               <option>Частный дом</option>
               <option>Отель</option>
@@ -731,12 +732,12 @@
             </select>
           </div>
           <div class="field">
-            <label for="link">Ссылка на проект / спецификацию</label>
-            <input type="text" id="link" placeholder="Google Drive, Dropbox или файл">
+            <label for="project_link">Ссылка на проект / спецификацию</label>
+            <input type="text" id="project_link" placeholder="Google Drive, Dropbox или файл">
           </div>
           <div class="field">
-            <label for="comment">Комментарий</label>
-            <textarea id="comment" placeholder="Бюджет, сроки, особенности объекта"></textarea>
+            <label for="user_comment">Комментарий</label>
+            <textarea id="user_comment" placeholder="Бюджет, сроки, особенности объекта"></textarea>
           </div>
           <button type="submit" class="btn light form-submit">Отправить проект <span class="btn-arrow">→</span></button>
           <div class="form-note">Отвечаем на заявки в течение 24 часов</div>
@@ -746,126 +747,142 @@
   </div>
 </section>
 
-<footer>
-  <div class="wrap">
-    <div class="foot-top">
-      <div class="foot-logo">KANTON</div>
-      <div class="foot-cols">
-        <div class="foot-col">
-          <h5>Навигация</h5>
-          <a href="#get">Что вы получаете</a>
-          <a href="#objects">Объекты</a>
-          <a href="#process">Как проходит работа</a>
-          <a href="#cases">Кейсы</a>
-        </div>
-        <div class="foot-col">
-          <h5>Контакты</h5>
-          <div>hello@kanton-supply.com</div>
-          <div>Telegram: @kanton_supply</div>
-          <div>Guangzhou, China</div>
-        </div>
-      </div>
-    </div>
-    <div class="foot-bottom">
-      <div>© 2026 KANTON — Комплектация объектов из Китая</div>
-      <div>Fabric-checked · Shipped worldwide</div>
-    </div>
-  </div>
-</footer>
-
 <script>
+  // ===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =====
+  
   // header background on scroll
   const header = document.getElementById('siteHeader');
-  window.addEventListener('scroll', () => {
-    header.classList.toggle('scrolled', window.scrollY > 40);
-  });
+  if (header) {
+    window.addEventListener('scroll', () => {
+      header.classList.toggle('scrolled', window.scrollY > 40);
+    });
+  }
 
   // reveal on scroll
   const revealEls = document.querySelectorAll('.reveal');
   const io = new IntersectionObserver((entries) => {
     entries.forEach(e => {
-      if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); }
+      if(e.isIntersecting){ 
+        e.target.classList.add('in-view'); 
+        io.unobserve(e.target); 
+      }
     });
   }, { threshold: 0.15 });
   revealEls.forEach(el => io.observe(el));
 
   // mobile nav
   const burger = document.getElementById('burger');
-  burger.addEventListener('click', () => {
-    document.querySelector('nav.links').classList.toggle('mobile-open');
-    const nav = document.querySelector('nav.links');
-    if(nav.classList.contains('mobile-open')){
-      nav.style.cssText = 'display:flex; flex-direction:column; position:fixed; top:0; right:0; bottom:0; width:78vw; background:#0b0b0a; padding:100px 30px; gap:26px; z-index:105;';
-    } else {
-      nav.style.cssText = '';
-    }
-  });
+  if (burger) {
+    burger.addEventListener('click', () => {
+      const nav = document.querySelector('nav.links');
+      if(nav) {
+        nav.classList.toggle('mobile-open');
+        if(nav.classList.contains('mobile-open')){
+          nav.style.cssText = 'display:flex; flex-direction:column; position:fixed; top:0; right:0; bottom:0; width:78vw; background:#0b0b0a; padding:100px 30px; gap:26px; z-index:105;';
+        } else {
+          nav.style.cssText = '';
+        }
+      }
+    });
+  }
 
-  // ===== ОТПРАВКА ФОРМЫ НА БЭКЕНД =====
-  document.getElementById('projectForm').addEventListener('submit', async function(e){
-    e.preventDefault();
+  // ===== ОСНОВНАЯ ФУНКЦИЯ ОТПРАВКИ ФОРМЫ =====
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('projectForm');
     
-    const btn = this.querySelector('.form-submit');
-    const originalText = btn.innerHTML;
-    
-    // Показываем статус "Отправка..."
-    btn.innerHTML = '⏳ Отправка...';
-    btn.disabled = true;
-    
-    // Собираем данные из формы
-    const data = {
-      name: document.getElementById('name').value.trim(),
-      contact: document.getElementById('contact').value.trim(),
-      objtype: document.getElementById('objtype').value,
-      link: document.getElementById('link').value.trim(),
-      comment: document.getElementById('comment').value.trim()
-    };
-    
-    // Проверяем обязательные поля
-    if (!data.name || !data.contact) {
-      alert('Пожалуйста, заполните имя и контактные данные');
-      btn.innerHTML = originalText;
-      btn.disabled = false;
+    if (!form) {
+      console.error('❌ Форма с id "projectForm" не найдена!');
       return;
     }
-    
-    try {
-      // 🔥 ВАЖНО: замените URL на адрес вашего сервера на Render
-      const API_URL = window.location.origin + '/send-project';
-      // Для локальной разработки используйте:
-      // const API_URL = 'http://localhost:5000/send-project';
+
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
       
-      const response = await fetch(API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
-      });
-      
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
-        // Успешная отправка
-        btn.innerHTML = '✅ Заявка отправлена!';
-        btn.style.background = '#a9adaa';
-        btn.style.borderColor = '#a9adaa';
-        btn.disabled = true;
-        
-        // Показываем сообщение об успехе
-        alert('Спасибо! Ваша заявка успешно отправлена. Мы свяжемся с вами в ближайшее время.');
-        
-        // Очищаем форму (опционально)
-        // this.reset();
-      } else {
-        throw new Error(result.error || 'Ошибка отправки');
+      const btn = this.querySelector('.form-submit');
+      if (!btn) {
+        console.error('❌ Кнопка отправки не найдена!');
+        return;
       }
-    } catch (error) {
-      console.error('❌ Ошибка:', error);
-      alert('Произошла ошибка при отправке. Пожалуйста, попробуйте позже или напишите нам напрямую в Telegram.');
-      btn.innerHTML = originalText;
-      btn.disabled = false;
-    }
+      
+      const originalText = btn.innerHTML;
+      
+      // Показываем статус "Отправка..."
+      btn.innerHTML = '⏳ Отправка...';
+      btn.disabled = true;
+      
+      // ===== ВАЖНО: ИСПРАВЛЕННЫЕ ID ПОЛЕЙ =====
+      // Теперь они совпадают с id в HTML
+      const nameField = document.getElementById('user_name');
+      const contactField = document.getElementById('user_contact');
+      const objtypeField = document.getElementById('object_type');
+      const linkField = document.getElementById('project_link');
+      const commentField = document.getElementById('user_comment');
+      
+      // Проверяем, что все поля существуют
+      if (!nameField || !contactField || !objtypeField || !linkField || !commentField) {
+        console.error('❌ Одно из полей формы не найдено!');
+        alert('Ошибка: не все поля формы найдены. Проверьте id элементов.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+      }
+      
+      // Собираем данные с проверкой на null/undefined
+      const data = {
+        name: nameField.value ? nameField.value.trim() : '',
+        contact: contactField.value ? contactField.value.trim() : '',
+        objtype: objtypeField.value || 'Не указан',
+        link: linkField.value ? linkField.value.trim() : '',
+        comment: commentField.value ? commentField.value.trim() : ''
+      };
+      
+      // Проверяем обязательные поля
+      if (!data.name || !data.contact) {
+        alert('Пожалуйста, заполните имя и контактные данные');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+      }
+      
+      try {
+        // 🔥 АВТОМАТИЧЕСКИЙ URL: работает и на Render, и локально
+        const API_URL = window.location.origin + '/send-project';
+        
+        console.log('📤 Отправка данных:', data);
+        console.log('📤 URL:', API_URL);
+        
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        console.log('📥 Ответ:', result);
+        
+        if (response.ok && result.success) {
+          // Успешная отправка
+          btn.innerHTML = '✅ Заявка отправлена!';
+          btn.style.background = '#a9adaa';
+          btn.style.borderColor = '#a9adaa';
+          btn.disabled = true;
+          
+          alert('Спасибо! Ваша заявка успешно отправлена. Мы свяжемся с вами в ближайшее время.');
+          
+          // Опционально: очистить форму
+          // form.reset();
+        } else {
+          throw new Error(result.error || 'Ошибка отправки');
+        }
+      } catch (error) {
+        console.error('❌ Ошибка:', error);
+        alert('Произошла ошибка при отправке. Пожалуйста, попробуйте позже или напишите нам напрямую в Telegram.');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    });
   });
 </script>
 

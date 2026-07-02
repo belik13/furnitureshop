@@ -32,7 +32,8 @@ def send_to_telegram(message):
     payload = {
         'chat_id': CHAT_ID,
         'text': message,
-        'parse_mode': 'Markdown',
+        # parse_mode убран — иначе спецсимволы в имени/ссылке/комментарии
+        # ломают запрос к Telegram API (400 Bad Request)
         'disable_web_page_preview': True
     }
     
@@ -65,6 +66,7 @@ def send_project():
         
         name = data.get('name', '').strip()
         contact = data.get('contact', '').strip()
+        phone = data.get('phone', '').strip()
         
         if not name or not contact:
             return jsonify({
